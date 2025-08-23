@@ -1,0 +1,48 @@
+{
+  "name": "nutriconnect-auth-mvp",
+  "version": "1.0.0",
+  "description": "NutriConnect Authentication Service MVP with proper folder structure",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "sludi": "node sludi-server.js",
+    "dev-sludi": "nodemon sludi-server.js",
+    "both": "concurrently \"npm run dev\" \"npm run dev-sludi\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "oauth",
+    "authentication", 
+    "nodejs", 
+    "express",
+    "nutriconnect",
+    "sludi",
+    "school-meals"
+  ],
+  "author": "NutriConnect Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "cors": "^2.8.5",
+    "axios": "^1.5.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nutriconnect/auth-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nutriconnect/auth-service/issues"
+  },
+  "homepage": "https://github.com/nutriconnect/auth-service#readme"
+}

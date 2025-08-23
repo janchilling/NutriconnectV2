@@ -1,0 +1,30 @@
+{
+  "name": "sludi-oauth-provider",
+  "version": "1.0.0",
+  "description": "Simple SLUDI OAuth2/OpenID Connect Provider for NutriConnect",
+  "main": "sludi-server.js",
+  "scripts": {
+    "start": "node sludi-server.js",
+    "dev": "nodemon sludi-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "oauth2",
+    "openid-connect",
+    "authentication",
+    "sludi",
+    "provider"
+  ],
+  "author": "SLUDI Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
