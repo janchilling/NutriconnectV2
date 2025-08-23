@@ -1,0 +1,277 @@
+{
+	"info": {
+		"_postman_id": "89301763-49a6-4f1f-b934-ae98ef95d63a",
+		"name": "NutriConnect",
+		"description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47469618",
+		"_collection_link": "https://janchilling-5190432.postman.co/workspace/Janindu-Pathirana's-Workspace~dbf4e162-edd3-40d5-8c2e-99653472bbfe/collection/47469618-89301763-49a6-4f1f-b934-ae98ef95d63a?action=share&source=collection_link&creator=47469618"
+	},
+	"item": [
+		{
+			"name": "authentication-service",
+			"item": [
+				{
+					"name": "Initiate Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"uin\": \"UIN001\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3001/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"sessionId\": \"d9faa87d4f43ee7fc40d73c62f18aabd\",\r\n  \"otp\": \"123456\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3001/auth/verify-otp",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Exchange Token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"sessionId\": \"d9faa87d4f43ee7fc40d73c62f18aabd\",\r\n  \"code\": \"12aff3826dfbe357445ad48e251e8a8d\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3001/auth/token",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "nutriconnect-service",
+			"item": [
+				{
+					"name": "Get Today's Menu - Happy Path",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "4e107863e39401b0517498609ca00fbaae9a4864ad1602f5f06fbdcb4086f30c",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3002/api/menu/today",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3002",
+							"path": [
+								"api",
+								"menu",
+								"today"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Menu by Category - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3002/api/menu/category/lunch",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3002",
+							"path": [
+								"api",
+								"menu",
+								"category",
+								"lunch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Menu Item Details - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3002/api/menu/item/item_001",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3002",
+							"path": [
+								"api",
+								"menu",
+								"item",
+								"item_001"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Menu - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3002/api/menu/search?q=rice&vegetarian=true",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3002",
+							"path": [
+								"api",
+								"menu",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "rice"
+								},
+								{
+									"key": "vegetarian",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order - Happy Path (Single Item)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"uin\": \"UIN001\",\r\n  \"orderFor\": \"UIN001\", \r\n  \"items\": [\r\n    {\r\n      \"menuItemId\": \"item_001\",\r\n      \"quantity\": 1\r\n    }\r\n  ],\r\n  \"deliveryDate\": \"2025-08-24\",\r\n  \"mealType\": \"lunch\",\r\n  \"specialInstructions\": \"No spicy food please\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3002/api/orders",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3002",
+							"path": [
+								"api",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Orders - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3002/api/orders?uin=UIN001",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3002",
+							"path": [
+								"api",
+								"orders"
+							],
+							"query": [
+								{
+									"key": "uin",
+									"value": "UIN001"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "sessionId_from_step1",
+			"value": "",
+			"type": "default"
+		}
+	]
+}

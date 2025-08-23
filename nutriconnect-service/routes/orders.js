@@ -12,7 +12,8 @@ const generateOrderId = () => {
 };
 
 // POST /api/orders - Create a new order
-router.post('/', authenticate, async (req, res) => {
+// router.post('/', authenticate, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { orderFor, items, deliveryDate, mealType, specialInstructions } = req.body;
     
@@ -77,11 +78,13 @@ router.post('/', authenticate, async (req, res) => {
         totalPrice: itemTotal
       });
     }
+
+    console.log(req)
     
     // Create order
     const newOrder = new Order({
       orderId: generateOrderId(),
-      uin: req.user.uin,
+      uin: req.body.uin,
       orderFor: orderFor,
       items: processedItems,
       totalAmount: totalAmount,
@@ -119,11 +122,19 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // GET /api/orders - Get user's orders
-router.get('/', authenticate, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const { status, mealType, page = 1, limit = 10 } = req.query;
+    const { uin, status, mealType, page = 1, limit = 10 } = req.query;
     
-    let filter = { uin: req.user.uin };
+    // Validate UIN is provided
+    if (!uin) {
+      return res.status(400).json({
+        success: false,
+        message: 'UIN is required as query parameter'
+      });
+    }
+    
+    let filter = { uin: uin };
     
     // Add optional filters
     if (status) {
@@ -164,7 +175,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/orders/:orderId - Get specific order details
-router.get('/:orderId', authenticate, async (req, res) => {
+router.get('/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
     
@@ -195,7 +206,7 @@ router.get('/:orderId', authenticate, async (req, res) => {
 });
 
 // PUT /api/orders/:orderId/cancel - Cancel an order
-router.put('/:orderId/cancel', authenticate, async (req, res) => {
+router.put('/:orderId/cancel', async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason } = req.body;
@@ -245,7 +256,7 @@ router.put('/:orderId/cancel', authenticate, async (req, res) => {
 });
 
 // GET /api/orders/today/summary - Get today's order summary
-router.get('/today/summary', authenticate, async (req, res) => {
+router.get('/today/summary', async (req, res) => {
   try {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
