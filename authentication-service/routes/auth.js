@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authService = require('../services/authService');
+const { authenticateToken } = require('../middleware/auth');
 const { validateUIN, validateOTP, validateTokenExchange } = require('../middleware/validation');
 
 // Step 1: Initiate login with UIN (create session, user gets OTP from SLUDI directly)
@@ -80,6 +81,58 @@ router.post('/token', validateTokenExchange, async (req, res, next) => {
       });
     }
   } catch (error) {
+    next(error);
+  }
+});
+
+// NEW: Verify token endpoint - for other services to validate tokens
+router.get('/verify', authenticateToken, async (req, res, next) => {
+  try {
+    // If we reach here, token is valid (middleware passed)
+    const { uin, token } = req.user;
+    
+    console.log(`✅ Token verified for UIN: ${uin}`);
+    
+    // Get additional user details if needed
+    const userDetails = await authService.getUserByUIN(uin);
+    
+    res.json({
+      success: true,
+      valid: true,
+      message: 'Token is valid',
+      uin: uin,
+      user: userDetails || {
+        uin: uin,
+        name: null,
+        phone: null,
+        email: null,
+        guardianOf: []
+      },
+      tokenInfo: {
+        type: 'Bearer',
+        issuedAt: req.user.issuedAt || null,
+        expiresAt: req.user.expiresAt || null
+      }
+    });
+  } catch (error) {
+    console.error('Token verification error:', error.message);
+    next(error);
+  }
+});
+
+// Additional endpoint to check token validity without full user details (lightweight)
+router.get('/validate', authenticateToken, async (req, res, next) => {
+  try {
+    // Lightweight validation - just confirm token is valid
+    const { uin } = req.user;
+    
+    res.json({
+      success: true,
+      valid: true,
+      uin: uin
+    });
+  } catch (error) {
+    console.error('Token validation error:', error.message);
     next(error);
   }
 });

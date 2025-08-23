@@ -266,6 +266,54 @@ const getUserProfile = async (uin) => {
   }
 };
 
+// Add this method to your existing authService.js
+
+const getUserByUIN = async (uin) => {
+  try {
+    // This could fetch from local database or SLUDI service
+    // For now, return basic user structure
+    
+    // Option 1: Fetch from local database if you store user info
+    // const user = await User.findOne({ uin });
+    // if (user) return user;
+    
+    // Option 2: Fetch from SLUDI service
+    const userInfo = await sludiService.getUserInfo(uin);
+    
+    if (userInfo && userInfo.success) {
+      return {
+        uin: userInfo.uin,
+        name: userInfo.name,
+        phone: userInfo.phone,
+        email: userInfo.email,
+        guardianOf: userInfo.guardianOf || [],
+        profile: userInfo.profile || {}
+      };
+    }
+    
+    // Option 3: Return minimal user info if not found
+    return {
+      uin: uin,
+      name: null,
+      phone: null,
+      email: null,
+      guardianOf: []
+    };
+    
+  } catch (error) {
+    console.error('Error fetching user by UIN:', error.message);
+    
+    // Return minimal user info on error
+    return {
+      uin: uin,
+      name: null,
+      phone: null,
+      email: null,
+      guardianOf: []
+    };
+  }
+};
+
 module.exports = {
   generateRandomString,
   createSession,
@@ -276,5 +324,6 @@ module.exports = {
   verifyOTP,
   exchangeToken,
   createOrUpdateUser,
-  getUserProfile
+  getUserProfile,
+  getUserByUIN
 };
