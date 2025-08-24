@@ -318,4 +318,74 @@ router.get('/today/summary', async (req, res) => {
   }
 });
 
+router.patch('/payment-status', async (req, res) => {
+  try {
+    // Simple internal service authentication
+    const serviceAuth = req.headers['x-service-auth'];
+    if (serviceAuth !== 'payment-service-internal') {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized - Internal service access only'
+      });
+    }
+
+    const { orderId, paymentStatus, paymentId, paymentMethod } = req.body;
+    
+    if (!orderId || !paymentStatus) {
+      return res.status(400).json({
+        success: false,
+        message: 'orderId and paymentStatus are required'
+      });
+    }
+
+    // Find and update the order
+    const Order = require('../models/Order');
+    const order = await Order.findOne({ orderId });
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Update payment-related fields
+    order.paymentStatus = paymentStatus;
+    if (paymentId) order.paymentId = paymentId;
+    if (paymentMethod) order.paymentMethod = paymentMethod;
+    
+    // Update order status based on payment status
+    if (paymentStatus === 'paid') {
+      order.status = 'confirmed'; // Move to confirmed when payment succeeds
+    } else if (paymentStatus === 'failed') {
+      order.status = 'cancelled'; // Cancel order if payment fails
+    }
+    // Keep existing status for 'pending' payments
+    
+    order.updatedAt = new Date();
+    await order.save();
+
+    console.log(`📦 Order ${orderId} updated - Payment: ${paymentStatus}, Status: ${order.status}`);
+
+    res.json({
+      success: true,
+      message: 'Order payment status updated successfully',
+      order: {
+        orderId: order.orderId,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        paymentId: order.paymentId,
+        updatedAt: order.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating order payment status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update order payment status'
+    });
+  }
+});
+
 module.exports = router;
