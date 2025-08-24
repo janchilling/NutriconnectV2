@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(copy:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [
+      "D:\\d\\SLIIT\\SLUDI\\NutriconnectV2\\nutriconnect_frontend\\src\\components"
+    ]
+  }
+}

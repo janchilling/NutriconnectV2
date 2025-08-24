@@ -31,6 +31,7 @@ connectDB();
 // Routes
 app.use('/api/menu', require('./routes/menu'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/session', require('./routes/session'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
