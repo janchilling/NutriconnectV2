@@ -1,0 +1,31 @@
+{
+  "name": "paydpi-mock-provider",
+  "version": "1.0.0",
+  "description": "Simple PayDPI Mock Payment Provider for NutriConnect",
+  "main": "paydpi-server.js",
+  "scripts": {
+    "start": "node paydpi-server.js",
+    "dev": "nodemon paydpi-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "payments",
+    "paydpi",
+    "mock",
+    "provider"
+  ],
+  "author": "PayDPI Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "axios": "^1.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
