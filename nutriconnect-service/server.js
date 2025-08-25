@@ -7,7 +7,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-// Middleware
+// Middleware FIRST
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -28,10 +28,11 @@ const connectDB = async () => {
 
 connectDB();
 
-// Routes
+// Routes AFTER middleware
 app.use('/api/menu', require('./routes/menu'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/session', require('./routes/session'));
+app.use('/api/ai', require('./routes/aiSuggestions')); // MOVED HERE
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -62,4 +63,5 @@ app.use('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`NutriConnect server running on port ${PORT}`);
+  console.log('🤖 AI Suggestions route available at: /api/ai/food-suggestions');
 });
