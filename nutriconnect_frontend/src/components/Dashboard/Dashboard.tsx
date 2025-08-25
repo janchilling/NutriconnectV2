@@ -9,6 +9,8 @@ import ActivityFeed from './ActivityFeed';
 import WeatherWidget from './WeatherWidget';
 import NutritionProgress from './NutritionProgress';
 import './Dashboard.css';
+import AIFoodSuggestionsWidget from './AIFoodSuggestionsWidget';
+
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -176,6 +178,7 @@ const Dashboard: React.FC = () => {
 
             {/* Right Column */}
             <div className="dashboard-right-column">
+              <AIFoodSuggestionsWidget />
               <WeatherWidget />
               <ActivityFeed />
             </div>

@@ -1678,3 +1678,195 @@
     gap: 1rem;
   }
 }
+
+
+/* Add this to nutriconnect_frontend/src/components/Dashboard/Dashboard.css */
+
+/* AI Food Suggestions Widget Styles */
+.ai-suggestions-widget {
+  background: #FAF6E9;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #DDEB9D;
+  box-shadow: 0 4px 15px rgba(160, 200, 120, 0.1);
+  margin-bottom: 1.5rem;
+  min-height: 300px;
+}
+
+.ai-suggestions-widget .widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #DDEB9D;
+}
+
+.ai-suggestions-widget .widget-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.ai-suggestions-widget .refresh-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.ai-suggestions-widget .refresh-btn:hover {
+  background-color: #DDEB9D;
+}
+
+.ai-suggestions-widget .context-info {
+  background: rgba(160, 200, 120, 0.1);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  border-left: 3px solid #A0C878;
+}
+
+.ai-suggestions-widget .context-info small {
+  color: #4a5568;
+  font-size: 0.85rem;
+}
+
+.ai-suggestions-widget .widget-content {
+  min-height: 200px;
+}
+
+.ai-suggestions-widget .loading-state,
+.ai-suggestions-widget .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  text-align: center;
+  color: #718096;
+}
+
+.ai-suggestions-widget .spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #DDEB9D;
+  border-top: 2px solid #A0C878;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ai-suggestions-widget .retry-btn {
+  background: #A0C878;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.ai-suggestions-widget .retry-btn:hover {
+  background: #8ab864;
+}
+
+.ai-suggestions-widget .suggestions-list {
+  space-y: 0.75rem;
+}
+
+.ai-suggestions-widget .suggestion-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(160, 200, 120, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ai-suggestions-widget .suggestion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(160, 200, 120, 0.15);
+}
+
+.ai-suggestions-widget .suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ai-suggestions-widget .priority-icon {
+  font-size: 1.1rem;
+}
+
+.ai-suggestions-widget .item-name {
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.ai-suggestions-widget .suggestion-reason {
+  color: #4a5568;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+  line-height: 1.4;
+}
+
+.ai-suggestions-widget .nutrition-highlight {
+  background: rgba(160, 200, 120, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  display: inline-block;
+}
+
+.ai-suggestions-widget .nutrition-highlight small {
+  color: #2d5016;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.ai-suggestions-widget .widget-footer {
+  text-align: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ai-suggestions-widget .widget-footer small {
+  color: #a0aec0;
+  font-size: 0.75rem;
+}
+
+.ai-suggestions-widget .no-suggestions {
+  text-align: center;
+  color: #718096;
+  font-style: italic;
+  padding: 2rem 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ai-suggestions-widget {
+    padding: 1rem;
+    min-height: 250px;
+  }
+  
+  .ai-suggestions-widget .suggestion-card {
+    padding: 0.75rem;
+  }
+  
+  .ai-suggestions-widget .context-info {
+    padding: 0.5rem;
+  }
+}
