@@ -930,11 +930,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - **MongoDB** for robust data storage
 - **React Team** for the excellent frontend framework
 
-## 📞 Support
 
-For support, please contact:
-- **Email**: support@nutriconnect.lk
-- **GitHub Issues**: [Create an issue](https://github.com/nutriconnect/issues)
 - **Documentation**: [docs.nutriconnect.lk](https://docs.nutriconnect.lk)
 
 ---
