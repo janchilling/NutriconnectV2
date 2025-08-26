@@ -244,17 +244,17 @@ export interface OrderResponse {
 // Menu Service
 export const menuService = {
   async getTodaysMenu(): Promise<MenuResponse> {
-    const response = await nutriconnectApi.get('/menu/today');
+    const response = await nutriconnectApi.get('/api/menu/today');
     return response.data;
   },
 
   async getMenuByCategory(category: string): Promise<MenuResponse> {
-    const response = await nutriconnectApi.get(`/menu/category/${category}`);
+    const response = await nutriconnectApi.get(`/api/menu/category/${category}`);
     return response.data;
   },
 
   async getMenuItem(itemId: string): Promise<MenuResponse> {
-    const response = await nutriconnectApi.get(`/menu/item/${itemId}`);
+    const response = await nutriconnectApi.get(`api/menu/item/${itemId}`);
     return response.data;
   },
 
@@ -272,7 +272,7 @@ export const menuService = {
     if (query.vegan) params.append('vegan', 'true');
     if (query.glutenFree) params.append('glutenFree', 'true');
 
-    const response = await nutriconnectApi.get(`/menu/search?${params.toString()}`);
+    const response = await nutriconnectApi.get(`/api/menu/search?${params.toString()}`);
     return response.data;
   },
 };
@@ -289,7 +289,7 @@ export const sessionService = {
     guardianOf?: string[];
   }): Promise<{ success: boolean; sessionId?: string; error?: string; session?: any }> {
     try {
-      const response = await nutriconnectApi.post('/session/create', userData);
+      const response = await nutriconnectApi.post('/api/session/create', userData);
       return response.data;
     } catch (error: any) {
       console.error('Session creation error:', error);
@@ -302,7 +302,7 @@ export const sessionService = {
 
   async validateSession(sessionId: string): Promise<{ success: boolean; valid?: boolean; session?: any; error?: string }> {
     try {
-      const response = await nutriconnectApi.post('/session/validate', { sessionId });
+      const response = await nutriconnectApi.post('/api/session/validate', { sessionId });
       return response.data;
     } catch (error: any) {
       return {
@@ -315,7 +315,7 @@ export const sessionService = {
 
   async getSession(sessionId: string): Promise<{ success: boolean; session?: any; error?: string }> {
     try {
-      const response = await nutriconnectApi.get(`/session/${sessionId}`);
+      const response = await nutriconnectApi.get(`/api/session/${sessionId}`);
       return response.data;
     } catch (error: any) {
       return {
@@ -327,7 +327,7 @@ export const sessionService = {
 
   async deactivateSession(sessionId: string): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const response = await nutriconnectApi.delete(`/session/${sessionId}`);
+      const response = await nutriconnectApi.delete(`/api/session/${sessionId}`);
       return response.data;
     } catch (error: any) {
       return {
@@ -339,7 +339,7 @@ export const sessionService = {
 
   async extendSession(sessionId: string, hours: number = 24): Promise<{ success: boolean; expiresAt?: string; error?: string }> {
     try {
-      const response = await nutriconnectApi.put(`/session/${sessionId}/extend`, { hours });
+      const response = await nutriconnectApi.put(`/api/session/${sessionId}/extend`, { hours });
       return response.data;
     } catch (error: any) {
       return {
@@ -354,7 +354,7 @@ export const sessionService = {
 export const orderService = {
   async createOrder(orderData: CreateOrderRequest): Promise<OrderResponse> {
     const user = authService.getStoredUser();
-    const response = await nutriconnectApi.post('/orders', {
+    const response = await nutriconnectApi.post('/api/orders', {
       ...orderData,
       uin: user?.uin,
     });
@@ -375,22 +375,22 @@ export const orderService = {
     if (params.page) searchParams.append('page', params.page.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());
 
-    const response = await nutriconnectApi.get(`/orders?${searchParams.toString()}`);
+    const response = await nutriconnectApi.get(`/api/orders?${searchParams.toString()}`);
     return response.data;
   },
 
   async getOrder(orderId: string): Promise<OrderResponse> {
-    const response = await nutriconnectApi.get(`/orders/${orderId}`);
+    const response = await nutriconnectApi.get(`/api/orders/${orderId}`);
     return response.data;
   },
 
   async cancelOrder(orderId: string, reason?: string): Promise<OrderResponse> {
-    const response = await nutriconnectApi.put(`/orders/${orderId}/cancel`, { reason });
+    const response = await nutriconnectApi.put(`/api/orders/${orderId}/cancel`, { reason });
     return response.data;
   },
 
   async getTodaysOrderSummary(): Promise<OrderResponse> {
-    const response = await nutriconnectApi.get('/orders/today/summary');
+    const response = await nutriconnectApi.get('/a[i/orders/today/summary');
     return response.data;
   },
 };
