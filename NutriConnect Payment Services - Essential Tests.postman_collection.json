@@ -1,0 +1,438 @@
+{
+	"info": {
+		"_postman_id": "a77c5988-62d9-4a4d-b716-0e25d354df89",
+		"name": "NutriConnect Payment Services - Essential Tests",
+		"description": "10 most important happy and sad path tests for Payment Service and PayDPI Mock",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47469618",
+		"_collection_link": "https://janchilling-5190432.postman.co/workspace/Janindu-Pathirana's-Workspace~dbf4e162-edd3-40d5-8c2e-99653472bbfe/collection/47469618-a77c5988-62d9-4a4d-b716-0e25d354df89?action=share&source=collection_link&creator=47469618"
+	},
+	"item": [
+		{
+			"name": "1. Get Auth Token (Setup)",
+			"item": [
+				{
+					"name": "Login UIN001",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.sessionId) {",
+									"        pm.collectionVariables.set('session_id', response.sessionId);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"uin\": \"UIN001\"\n}"
+						},
+						"url": {
+							"raw": "{{auth_service}}/auth/login",
+							"host": [
+								"{{auth_service}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.code) {",
+									"        pm.collectionVariables.set('auth_code', response.code);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{session_id}}\",\n  \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{auth_service}}/auth/verify-otp",
+							"host": [
+								"{{auth_service}}"
+							],
+							"path": [
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.tokens && response.tokens.access_token) {",
+									"        pm.collectionVariables.set('access_token', response.tokens.access_token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{session_id}}\",\n  \"code\": \"{{auth_code}}\"\n}"
+						},
+						"url": {
+							"raw": "{{auth_service}}/auth/token",
+							"host": [
+								"{{auth_service}}"
+							],
+							"path": [
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Setup Wallet",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": 500,\n  \"method\": \"subsidy\"\n}"
+				},
+				"url": {
+					"raw": "{{payment_service}}/wallet/topup",
+					"host": [
+						"{{payment_service}}"
+					],
+					"path": [
+						"wallet",
+						"topup"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. HAPPY - Wallet Payment Success",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": 50,\n  \"orderId\": \"ORDER_WALLET_SUCCESS\",\n  \"paymentMethod\": \"wallet\"\n}"
+				},
+				"url": {
+					"raw": "{{payment_service}}/payments/process",
+					"host": [
+						"{{payment_service}}"
+					],
+					"path": [
+						"payments",
+						"process"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. HAPPY - Card Payment Success",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": 100,\n  \"orderId\": \"ORDER_CARD_SUCCESS\",\n  \"paymentMethod\": \"card\"\n}"
+				},
+				"url": {
+					"raw": "{{payment_service}}/payments/process",
+					"host": [
+						"{{payment_service}}"
+					],
+					"path": [
+						"payments",
+						"process"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. HAPPY - Subsidy Payment Success",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": 75,\n  \"orderId\": \"ORDER_SUBSIDY_SUCCESS\",\n  \"paymentMethod\": \"subsidy\"\n}"
+				},
+				"url": {
+					"raw": "{{payment_service}}/payments/process",
+					"host": [
+						"{{payment_service}}"
+					],
+					"path": [
+						"payments",
+						"process"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6. SAD - Wallet Insufficient Balance",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": 5000,\n  \"orderId\": \"ORDER_WALLET_FAIL\",\n  \"paymentMethod\": \"wallet\"\n}"
+				},
+				"url": {
+					"raw": "{{payment_service}}/payments/process",
+					"host": [
+						"{{payment_service}}"
+					],
+					"path": [
+						"payments",
+						"process"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "7. SAD - Card Insufficient Funds",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": 999,\n  \"orderId\": \"ORDER_CARD_INSUFFICIENT\",\n  \"paymentMethod\": \"card\"\n}"
+				},
+				"url": {
+					"raw": "{{payment_service}}/payments/process",
+					"host": [
+						"{{payment_service}}"
+					],
+					"path": [
+						"payments",
+						"process"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "8. SAD - Card Declined",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": 888,\n  \"orderId\": \"ORDER_CARD_DECLINED\",\n  \"paymentMethod\": \"card\"\n}"
+				},
+				"url": {
+					"raw": "{{payment_service}}/payments/process",
+					"host": [
+						"{{payment_service}}"
+					],
+					"path": [
+						"payments",
+						"process"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "9. SAD - No Authorization Token",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": 100,\n  \"orderId\": \"ORDER_NO_AUTH\",\n  \"paymentMethod\": \"wallet\"\n}"
+				},
+				"url": {
+					"raw": "{{payment_service}}/payments/process",
+					"host": [
+						"{{payment_service}}"
+					],
+					"path": [
+						"payments",
+						"process"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "10. Check Wallet Balance",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{payment_service}}/wallet",
+					"host": [
+						"{{payment_service}}"
+					],
+					"path": [
+						"wallet"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "auth_service",
+			"value": "http://localhost:3001"
+		},
+		{
+			"key": "payment_service",
+			"value": "http://localhost:3003"
+		},
+		{
+			"key": "paydpi_service",
+			"value": "http://localhost:4002"
+		},
+		{
+			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "session_id",
+			"value": ""
+		},
+		{
+			"key": "auth_code",
+			"value": ""
+		}
+	]
+}
