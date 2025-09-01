@@ -5,6 +5,7 @@ import Login from './components/Login/Login';
 import Register from './components/Register/Register';
 import Dashboard from './components/Dashboard/Dashboard';
 import TestMPGS from './components/Payment/TestMPGS';
+import UserProfile from './components/UserProfile/UserProfile';
 import SessionValidator from './components/common/SessionValidator';
 import './styles/index.css';
 
@@ -43,14 +44,21 @@ const App: React.FC = () => {
               </PublicRoute>
             } 
           />
+
+          {/* ESIGNET callback route */}
+          <Route 
+            path="/userprofile" 
+            element={<UserProfile />} 
+          />
           
           {/* Protected routes */}
           <Route 
             path="/dashboard" 
             element={
-              <ProtectedRoute>
+              <PublicRoute>
                 <Dashboard />
-              </ProtectedRoute>
+              </PublicRoute>
+                
             } 
           />
           

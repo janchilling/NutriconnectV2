@@ -522,3 +522,90 @@
     font-size: 1.25rem;
   }
 }
+
+/* ESIGNET Integration Styles */
+.login-separator {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  gap: 1rem;
+}
+
+.separator-line {
+  flex: 1;
+  height: 1px;
+  background: #e5e5e5;
+}
+
+.separator-text {
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0 0.5rem;
+}
+
+.esignet-button-container {
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.esignet-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin: 1rem 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.esignet-loading::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #A0C878;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.esignet-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  margin: 1rem 0;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Override ESIGNET button styles to match theme */
+#sign-in-with-esignet button {
+  width: 100% !important;
+  background: #A0C878 !important;
+  border: 1px solid #A0C878 !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+#sign-in-with-esignet button:hover {
+  background: #8fb566 !important;
+  border-color: #8fb566 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(160, 200, 120, 0.3) !important;
+}

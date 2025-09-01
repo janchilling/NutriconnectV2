@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authService, sessionService } from '../../services/api';
+import { useExternalScript } from '../../hooks/useExternalScript';
+import { Error } from '../common/Error';
+import clientDetails from '../../constants/clientDetails';
 import './Login.css';
 
 interface LoginState {
@@ -12,8 +16,21 @@ interface LoginState {
   success: string;
 }
 
+interface EsignetError {
+  errorCode: string;
+  errorMsg?: string;
+  showToast?: boolean;
+}
+
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { i18n, t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const [esignetError, setEsignetError] = useState<EsignetError | null>(null);
+  
+  const signInButtonScript = window._env_?.SIGN_IN_BUTTON_PLUGIN_URL;
+  const scriptState = useExternalScript(signInButtonScript || null);
+  
   const [state, setState] = useState<LoginState>({
     step: 'uin',
     uin: '',
@@ -22,6 +39,97 @@ const Login: React.FC = () => {
     error: '',
     success: '',
   });
+
+  const renderSignInButton = useCallback(() => {
+    if (scriptState !== "ready") return;
+
+    const oidcConfig = {
+      authorizeUri: clientDetails.uibaseUrl + clientDetails.authorizeEndpoint,
+      redirect_uri: clientDetails.redirect_uri_userprofile,
+      client_id: clientDetails.clientId,
+      scope: clientDetails.scopeUserProfile,
+      nonce: clientDetails.nonce,
+      state: clientDetails.state,
+      acr_values: clientDetails.acr_values,
+      claims_locales: clientDetails.claims_locales,
+      display: clientDetails.display,
+      prompt: clientDetails.prompt,
+      max_age: clientDetails.max_age,
+      ui_locales: i18n.language,
+      claims: JSON.parse(decodeURIComponent(clientDetails.userProfileClaims)),
+    };
+
+    window.SignInWithEsignetButton?.init({
+      oidcConfig: oidcConfig,
+      buttonConfig: {
+        customStyle: {
+          labelSpanStyle: {
+            display: 'inline-block',
+            'font-size': '0.875rem',
+            'font-weight': '600',
+            'line-height': '1.25rem',
+            'vertical-align': 'middle'
+          },
+          logoDivStyle: {
+            alignItems: 'center',
+            background: 'white',
+            border: '1px solid #A0C878',
+            'border-radius': '18px',
+            display: 'inline-block',
+            height: '30px',
+            position: 'absolute',
+            right: '8px',
+            verticalAlign: 'middle',
+            width: '30px'
+          },
+          logoImgStyle: {
+            height: '29px',
+            'object-fit': 'contain',
+            width: '29px'
+          },
+          outerDivStyleStandard: {
+            'align-items': 'center',
+            background: '#A0C878',
+            border: '1px solid #A0C878',
+            'border-radius': '0.375rem',
+            color: 'white',
+            display: 'flex',
+            padding: '0.625rem 1.25rem',
+            position: 'relative',
+            'text-decoration': 'none',
+            width: '100%',
+            'justify-content': 'center',
+            'margin-top': '1rem'
+          }
+        },
+        labelText: t('login.sign_in_with_sludi') || 'Sign in with SLUDI',
+      },
+      signInElement: document.getElementById("sign-in-with-esignet"),
+    });
+  }, [scriptState, i18n.language, t]);
+
+  // Handle ESIGNET button and URL parameters
+  useEffect(() => {
+    const checkSearchParams = async () => {
+      let errorCode = searchParams.get("error");
+      let error_desc = searchParams.get("error_description");
+
+      if (errorCode) {
+        setEsignetError({ 
+          errorCode: errorCode, 
+          errorMsg: error_desc || undefined, 
+          showToast: true 
+        });
+      }
+    };
+    checkSearchParams();
+
+    renderSignInButton();
+
+    i18n.on("languageChanged", function (lng: string) {
+      renderSignInButton();
+    });
+  }, [scriptState, i18n, searchParams, renderSignInButton]);
 
   const handleUinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,6 +359,39 @@ const Login: React.FC = () => {
           Enter your UIN to receive an OTP on your registered phone number
         </p>
       </div>
+
+      {/* OR separator */}
+      <div className="login-separator">
+        <div className="separator-line"></div>
+        <span className="separator-text">{t('login.or') || 'OR'}</span>
+        <div className="separator-line"></div>
+      </div>
+
+      {/* ESIGNET Error Display */}
+      {esignetError && (
+        <Error 
+          errorCode={esignetError.errorCode} 
+          errorMsg={esignetError.errorMsg} 
+          showToast={esignetError.showToast} 
+        />
+      )}
+
+      {/* ESIGNET Button */}
+      {scriptState === "ready" && (
+        <div id="sign-in-with-esignet" className="esignet-button-container"></div>
+      )}
+      
+      {scriptState === "loading" && (
+        <div className="esignet-loading">
+          <span>Loading SLUDI authentication...</span>
+        </div>
+      )}
+      
+      {scriptState === "error" && (
+        <div className="esignet-error">
+          <span>⚠️ SLUDI authentication unavailable</span>
+        </div>
+      )}
     </form>
   );
 
