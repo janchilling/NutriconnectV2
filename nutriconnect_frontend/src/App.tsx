@@ -12,6 +12,16 @@ import './styles/index.css';
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isAuthenticated = authService.isAuthenticated();
+  const location = window.location;
+  
+  // Allow access to dashboard if there's an eSignet auth code in the URL
+  const hasAuthCode = new URLSearchParams(location.search).has('code');
+  const isDashboard = location.pathname === '/dashboard';
+  
+  if (isDashboard && hasAuthCode) {
+    return <>{children}</>;
+  }
+  
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 

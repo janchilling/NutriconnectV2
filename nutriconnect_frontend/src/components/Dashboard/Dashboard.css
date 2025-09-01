@@ -1986,3 +1986,30 @@
     transform: translateX(-50%) translateY(-10px);
   }
 }
+
+/* eSignet Authentication Error Styles */
+.auth-error {
+  max-width: 500px;
+  margin: 100px auto;
+  padding: var(--space-8);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.auth-error h2 {
+  color: #e53e3e;
+  margin-bottom: var(--space-4);
+  font-size: 1.5rem;
+}
+
+.auth-error p {
+  color: #4a5568;
+  margin-bottom: var(--space-3);
+  line-height: 1.6;
+}
+
+.auth-error .btn {
+  margin-top: var(--space-4);
+}

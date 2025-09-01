@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { authService, sessionService } from '../../services/api';
+import { authService, sessionService, UserProfile } from '../../services/api';
 import { useExternalScript } from '../../hooks/useExternalScript';
 import { Error } from '../common/Error';
 import clientDetails from '../../constants/clientDetails';
@@ -302,6 +302,37 @@ const Login: React.FC = () => {
     }));
   };
 
+  // Test login function for UIN001
+  const handleTestLogin = async () => {
+    try {
+      setState(prev => ({ ...prev, step: 'loading' }));
+      
+      // Create a test user UIN001 directly
+      const testUser: UserProfile = {
+        uin: 'UIN001',
+        name: 'Test User',
+        phone: '+94771234567',
+        email: 'testuser@nutriconnect.com',
+        guardianOf: []
+      };
+
+      // Store user data and create session
+      localStorage.setItem('userProfile', JSON.stringify(testUser));
+      const mockToken = `test_login_${Date.now()}`;
+      localStorage.setItem('accessToken', mockToken);
+
+      // Navigate to dashboard
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Test login error:', error);
+      setState(prev => ({ 
+        ...prev, 
+        step: 'uin',
+        error: 'Test login failed. Please try again.'
+      }));
+    }
+  };
+
   const renderUinForm = () => (
     <form onSubmit={handleUinSubmit} className="login-form fade-in">
       <div className="form-group">
@@ -349,6 +380,19 @@ const Login: React.FC = () => {
             "Send OTP"
           )}
         </button>
+        
+        {/* Test Login Button for Development */}
+        {process.env.NODE_ENV === 'development' && (
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={handleTestLogin}
+            disabled={state.step === "loading"}
+            style={{ marginTop: '10px' }}
+          >
+            Test Login (UIN001)
+          </button>
+        )}
       </div>
 
       <div className="login-help">

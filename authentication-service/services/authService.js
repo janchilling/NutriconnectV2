@@ -314,6 +314,96 @@ const getUserByUIN = async (uin) => {
   }
 };
 
+// Get session by authorization code
+const getSessionByCode = async (code) => {
+  try {
+    const session = await Session.findOne({ code });
+    return session;
+  } catch (error) {
+    console.error('Session retrieval by code error:', error.message);
+    return null;
+  }
+};
+
+// Exchange authorization code for tokens (alternative method for eSignet flow)
+const exchangeTokenByCode = async (code) => {
+  try {
+    const session = await getSessionByCode(code);
+    
+    if (!session) {
+      return {
+        success: false,
+        error: 'invalid_code',
+        message: 'Invalid or expired authorization code'
+      };
+    }
+
+    if (session.step !== 'completed') {
+      return {
+        success: false,
+        error: 'invalid_session_state',
+        message: 'Session is not in completed state'
+      };
+    }
+
+    // If we already have tokens from the previous exchange, return the user info
+    if (session.accessToken) {
+      const userInfoResult = await sludiService.getUserInfo(session.accessToken);
+      if (!userInfoResult.success) {
+        return userInfoResult;
+      }
+
+      // Get or create user
+      const userResult = await createOrUpdateUser(session.uin, userInfoResult.userInfo);
+      
+      return {
+        success: true,
+        user: userResult,
+        tokens: {
+          access_token: session.accessToken,
+          refresh_token: session.refreshToken || null,
+          expires_in: session.expiresIn || 3600
+        }
+      };
+    }
+
+    // If no tokens yet, try to exchange them
+    const tokenResult = await sludiService.exchangeCode(session.uin, code);
+    if (!tokenResult.success) {
+      return tokenResult;
+    }
+
+    // Get user info with the access token
+    const userInfoResult = await sludiService.getUserInfo(tokenResult.tokens.access_token);
+    if (!userInfoResult.success) {
+      return userInfoResult;
+    }
+
+    // Store tokens in session
+    session.accessToken = tokenResult.tokens.access_token;
+    session.refreshToken = tokenResult.tokens.refresh_token;
+    session.expiresIn = tokenResult.tokens.expires_in;
+    await session.save();
+
+    // Create or update user
+    const userResult = await createOrUpdateUser(session.uin, userInfoResult.userInfo);
+    
+    return {
+      success: true,
+      user: userResult,
+      tokens: tokenResult.tokens
+    };
+    
+  } catch (error) {
+    console.error('Token exchange by code error:', error.message);
+    return {
+      success: false,
+      error: 'token_exchange_failed',
+      message: 'Failed to exchange authorization code for tokens'
+    };
+  }
+};
+
 module.exports = {
   generateRandomString,
   createSession,
@@ -325,5 +415,7 @@ module.exports = {
   exchangeToken,
   createOrUpdateUser,
   getUserProfile,
-  getUserByUIN
+  getUserByUIN,
+  getSessionByCode,
+  exchangeTokenByCode
 };

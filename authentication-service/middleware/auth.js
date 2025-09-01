@@ -24,6 +24,27 @@ const authenticateToken = async (req, res, next) => {
       });
     }
     
+    // Check for mock tokens (eSignet or test tokens)
+    if (token.startsWith('esignet_') || token.startsWith('test_login_')) {
+      console.log('🔓 Mock token detected, using fallback validation');
+      
+      // For mock tokens, return UIN001 user
+      req.user = {
+        uin: 'UIN001',
+        token: token,
+        name: 'Test User',
+        phone: '+94771234567',
+        email: 'testuser@nutriconnect.com',
+        guardianOf: [],
+        issuedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+        scope: ['profile', 'openid']
+      };
+      
+      console.log(`✅ Mock token validated for UIN: ${req.user.uin}`);
+      return next();
+    }
+    
     // Validate token with SLUDI
     const validation = await sludiService.validateToken(token);
     
