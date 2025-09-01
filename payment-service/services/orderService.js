@@ -36,6 +36,40 @@ const updateOrderPaymentStatus = async (orderId, paymentStatus, paymentId, payme
   }
 };
 
+// Update order status (for payment completion)
+const updateOrderStatus = async (orderId, status, paymentDetails = {}) => {
+  try {
+    const response = await axios.patch(
+      `${servicesConfig.nutriconnectService.baseUrl}/api/orders/${orderId}/status`,
+      {
+        status,
+        paymentDetails,
+        updatedAt: new Date()
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Service-Auth': 'payment-service-internal' // Internal service auth
+        },
+        timeout: 5000
+      }
+    );
+
+    console.log(`✅ Order ${orderId} status updated to: ${status}`);
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    console.error(`❌ Failed to update order ${orderId} status:`, error.message);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
 module.exports = {
-  updateOrderPaymentStatus
+  updateOrderPaymentStatus,
+  updateOrderStatus
 };

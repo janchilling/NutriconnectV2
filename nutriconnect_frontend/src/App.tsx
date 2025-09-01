@@ -4,6 +4,7 @@ import { authService } from './services/api';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
 import Dashboard from './components/Dashboard/Dashboard';
+import TestMPGS from './components/Payment/TestMPGS';
 import SessionValidator from './components/common/SessionValidator';
 import './styles/index.css';
 
@@ -49,6 +50,15 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/test-mpgs" 
+            element={
+              <ProtectedRoute>
+                <TestMPGS />
               </ProtectedRoute>
             } 
           />

@@ -2,7 +2,7 @@ module.exports = {
   baseUrl: process.env.PAYDPI_BASE_URL || 'http://localhost:4002',
   clientId: process.env.PAYDPI_CLIENT_ID || 'nutriconnect-payment-client',
   clientSecret: process.env.PAYDPI_CLIENT_SECRET || 'nutriconnect-payment-secret',
-  callbackUrl: process.env.PAYDPI_CALLBACK_URL || 'http://localhost:3003/payments/callback',
+  callbackUrl: process.env.PAYDPI_CALLBACK_URL || 'http://localhost:3003/api/payment/callback',
   endpoints: {
     initiate: '/api/payments/initiate',
     verify: '/api/payments/verify',

@@ -36,8 +36,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.use('/payments', paymentRoutes);
-app.use('/wallet', walletRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/wallet', walletRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

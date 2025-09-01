@@ -388,4 +388,72 @@ router.patch('/payment-status', async (req, res) => {
   }
 });
 
+// PATCH /api/orders/:orderId/status - Update order status (internal service call)
+router.patch('/:orderId/status', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status, paymentDetails } = req.body;
+
+    // Validate service authentication
+    const serviceAuth = req.headers['x-service-auth'];
+    if (serviceAuth !== 'payment-service-internal') {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized service call'
+      });
+    }
+
+    console.log(`📦 Updating order ${orderId} status to: ${status}`);
+
+    const order = await Order.findOne({ orderId });
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Update order status
+    order.status = status;
+    order.updatedAt = new Date();
+
+    // If payment details are provided, update payment information
+    if (paymentDetails) {
+      if (paymentDetails.paymentId) order.paymentId = paymentDetails.paymentId;
+      if (paymentDetails.transactionId) order.transactionId = paymentDetails.transactionId;
+      if (paymentDetails.amount) order.paymentAmount = paymentDetails.amount;
+      if (paymentDetails.currency) order.paymentCurrency = paymentDetails.currency;
+      
+      // Update payment status based on order status
+      if (status === 'paid' || status === 'confirmed') {
+        order.paymentStatus = 'paid';
+      } else if (status === 'cancelled') {
+        order.paymentStatus = 'failed';
+      }
+    }
+
+    await order.save();
+
+    console.log(`✅ Order ${orderId} status updated to: ${status}`);
+
+    res.json({
+      success: true,
+      message: 'Order status updated successfully',
+      order: {
+        orderId: order.orderId,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        updatedAt: order.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update order status'
+    });
+  }
+});
+
 module.exports = router;

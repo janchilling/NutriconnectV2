@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 
 const AUTH_BASE_URL = process.env.REACT_APP_AUTH_API_URL || 'http://localhost:3001';
 const NUTRICONNECT_BASE_URL = process.env.REACT_APP_NUTRICONNECT_API_URL || 'http://localhost:3002';
+const PAYMENT_BASE_URL = process.env.REACT_APP_PAYMENT_API_URL || 'http://localhost:3003';
 
 // Create axios instances
 const authApi = axios.create({
@@ -14,8 +15,24 @@ const nutriconnectApi = axios.create({
   timeout: 10000,
 });
 
+const paymentApi = axios.create({
+  baseURL: PAYMENT_BASE_URL,
+  timeout: 10000,
+});
+
 // Request interceptor to add auth token
 nutriconnectApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+paymentApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -42,6 +59,11 @@ authApi.interceptors.response.use(
 );
 
 nutriconnectApi.interceptors.response.use(
+  (response) => response,
+  handleAuthError
+);
+
+paymentApi.interceptors.response.use(
   (response) => response,
   handleAuthError
 );
@@ -390,9 +412,252 @@ export const orderService = {
   },
 
   async getTodaysOrderSummary(): Promise<OrderResponse> {
-    const response = await nutriconnectApi.get('/a[i/orders/today/summary');
+    const response = await nutriconnectApi.get('/api/orders/today/summary');
     return response.data;
   },
 };
 
-export { authApi, nutriconnectApi };
+// Payment Types
+export interface PaymentSessionRequest {
+  orderId: string;
+  amount: number;
+  customer?: {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+  };
+  billing?: {
+    address?: {
+      street?: string;
+      street2?: string;
+      city?: string;
+      stateProvince?: string;
+      postcodeZip?: string;
+      country?: string;
+    };
+  };
+}
+
+export interface PaymentSessionResponse {
+  success: boolean;
+  sessionId?: string;
+  checkoutUrl?: string;
+  mpgsSessionId?: string;
+  successIndicatorUrl?: string;
+  paymentId?: string;
+  error?: string;
+  message?: string;
+}
+
+export interface PaymentCompleteRequest {
+  sessionId: string;
+  orderId: string;
+  resultIndicator?: string;
+}
+
+export interface PaymentCompleteResponse {
+  success: boolean;
+  verified?: boolean;
+  status?: string;
+  paymentId?: string;
+  transactionId?: string;
+  message?: string;
+  error?: string;
+}
+
+export interface PaymentStatusResponse {
+  success: boolean;
+  sessionId?: string;
+  status?: string;
+  order?: any;
+  transaction?: any;
+  error?: string;
+  message?: string;
+}
+
+// Payment Service
+export const paymentService = {
+  /**
+   * Create MPGS payment session
+   */
+  async createPaymentSession(sessionData: PaymentSessionRequest): Promise<PaymentSessionResponse> {
+    const response = await paymentApi.post('/api/payment/session', sessionData);
+    return response.data;
+  },
+
+  /**
+   * Complete payment verification
+   */
+  async completePayment(paymentData: PaymentCompleteRequest): Promise<PaymentCompleteResponse> {
+    const response = await paymentApi.post('/api/payment/complete', paymentData);
+    return response.data;
+  },
+
+  /**
+   * Check payment session status
+   */
+  async getPaymentStatus(sessionId: string): Promise<PaymentStatusResponse> {
+    const response = await paymentApi.get(`/api/payment/session/${sessionId}/status`);
+    return response.data;
+  },
+
+  /**
+   * Initialize MPGS Hosted Checkout using checkout.min.js following Mastercard documentation
+   */
+  async initializeCheckout(sessionId: string, checkoutUrl: string): Promise<void> {
+    console.log('🔧 Loading MPGS checkout.min.js from:', checkoutUrl);
+    
+    return new Promise((resolve, reject) => {
+      // Check if checkout script is already loaded
+      if (window.Checkout) {
+        console.log('✅ MPGS Checkout already available, configuring...');
+        this.configureCheckout(sessionId);
+        resolve();
+        return;
+      }
+
+      // Remove any existing checkout scripts to avoid conflicts
+      const existingScripts = document.querySelectorAll('script[src*="checkout"]');
+      existingScripts.forEach(script => script.remove());
+
+      // Define global callback functions BEFORE loading the script (Step 4)
+      (window as any).errorCallback = function(error: any) {
+        console.error('❌ MPGS Payment error:', error);
+        window.postMessage({
+          type: 'MPGS_PAYMENT_ERROR',
+          error: error?.explanation || error?.error?.explanation || 'Payment failed'
+        }, window.location.origin);
+      };
+      
+      (window as any).cancelCallback = function() {
+        console.log('⚠️ MPGS Payment cancelled');
+        window.postMessage({
+          type: 'MPGS_PAYMENT_CANCEL'
+        }, window.location.origin);
+      };
+
+      (window as any).completeCallback = function(result: any) {
+        console.log('✅ MPGS Payment completed:', result);
+        window.postMessage({
+          type: 'MPGS_PAYMENT_SUCCESS',
+          result
+        }, window.location.origin);
+      };
+
+      // Step 1: Load MPGS checkout.min.js script WITH callback data attributes
+      const script = document.createElement('script');
+      script.src = checkoutUrl;
+      script.setAttribute('data-error', 'errorCallback');
+      script.setAttribute('data-cancel', 'cancelCallback');
+      script.setAttribute('data-complete', 'completeCallback');
+      script.async = true;
+      
+      script.onload = () => {
+        console.log('✅ MPGS checkout.min.js loaded successfully');
+        
+        // Wait for Checkout object to be available
+        const checkForCheckout = () => {
+          if (window.Checkout) {
+            console.log('✅ MPGS Checkout object available');
+            // Step 2: Configure the checkout object
+            this.configureCheckout(sessionId);
+            resolve();
+          } else {
+            // Retry after a short delay
+            setTimeout(checkForCheckout, 50);
+          }
+        };
+        
+        checkForCheckout();
+      };
+      
+      script.onerror = (error) => {
+        console.error('❌ Failed to load MPGS checkout.min.js:', error);
+        reject(new Error('Failed to load MPGS checkout script'));
+      };
+      
+      // Add script to head
+      document.head.appendChild(script);
+    });
+  },
+
+  /**
+   * Step 2: Configure MPGS Checkout object with session ID
+   */
+  configureCheckout(sessionId: string): void {
+    if (!window.Checkout) {
+      throw new Error('MPGS Checkout object not available');
+    }
+
+    console.log('🔧 Step 2: Configuring MPGS Checkout with session:', sessionId);
+    
+    try {
+      // Step 2: Call Checkout.configure() with session.id (following Mastercard docs)
+      const config = {
+        session: {
+          id: sessionId
+        }
+      };
+      
+      console.log('🔧 MPGS Configuration:', JSON.stringify(config, null, 2));
+      
+      window.Checkout.configure(config);
+      
+      console.log('✅ Step 2: MPGS Checkout configured successfully');
+    } catch (error) {
+      console.error('❌ MPGS Checkout configuration failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Step 3: Show MPGS hosted payment page
+   */
+  async showPaymentPage(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!window.Checkout) {
+        reject(new Error('MPGS Checkout not initialized'));
+        return;
+      }
+
+      console.log('🚀 Step 3: Launching MPGS hosted payment page');
+      
+      try {
+        // Step 3: Use Checkout.showPaymentPage() as per Mastercard documentation
+        window.Checkout.showPaymentPage();
+        
+        console.log('✅ MPGS hosted payment page launched successfully');
+        console.log('📝 User will complete payment on Mastercard hosted page');
+        console.log('📝 Callbacks will handle the response automatically');
+        
+        // The hosted payment page will handle everything and use callbacks
+        // We resolve immediately as the payment flow is now handled by MPGS
+        resolve();
+        
+      } catch (error) {
+        console.error('❌ MPGS hosted payment page launch failed:', error);
+        
+        let errorMessage = 'Failed to launch payment page';
+        if (error && typeof error === 'object') {
+          if ((error as any).error && (error as any).error.explanation) {
+            errorMessage = (error as any).error.explanation;
+          } else if ((error as any).explanation) {
+            errorMessage = (error as any).explanation;
+          }
+        }
+        
+        reject(new Error(errorMessage));
+      }
+    });
+  }
+};
+
+// Extend window interface for MPGS
+declare global {
+  interface Window {
+    Checkout: any;
+  }
+}
+
+export { authApi, nutriconnectApi, paymentApi };

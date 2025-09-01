@@ -20,22 +20,34 @@ const PaymentSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['wallet', 'card', 'subsidy', 'cash'],
+    enum: ['wallet', 'card', 'subsidy', 'cash', 'mpgs_card', 'paydpi'],
     required: true
   },
   status: {
     type: String,
-    enum: ['pending', 'processing', 'completed', 'failed', 'refunded'],
+    enum: ['pending', 'processing', 'completed', 'failed', 'refunded', 'session_created', 'authenticated', 'cancelled'],
     default: 'pending'
   },
   paydpiTransactionId: {
+    type: String
+  },
+  // MPGS specific fields
+  mpgsSessionId: {
+    type: String
+  },
+  mpgsTransactionId: {
     type: String
   },
   metadata: {
     cardLast4: String,
     subsidyType: String,
     walletBalanceBefore: Number,
-    walletBalanceAfter: Number
+    walletBalanceAfter: Number,
+    // MPGS specific metadata
+    acquirerCode: String,
+    receiptNumber: String,
+    authenticationStatus: String,
+    paymentMethodType: String
   },
   createdAt: {
     type: Date,

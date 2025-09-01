@@ -5,6 +5,7 @@ const orderService = require('../services/orderService');
 const mpgsService = require('../services/mpgsService');
 const { authenticateToken } = require('../middleware/auth');
 const { validatePaymentRequest } = require('../middleware/validation');
+const sessionService = require('../services/sessionService');
 
 // Create MPGS payment session
 router.post('/session', authenticateToken, async (req, res, next) => {
@@ -30,7 +31,7 @@ router.post('/session', authenticateToken, async (req, res, next) => {
     const payment = new Payment({
       paymentId,
       orderId,
-      uin: uin,
+      userId: uin,
       amount: parseFloat(amount),
       currency: 'LKR',
       paymentMethod: 'mpgs_card',
@@ -75,10 +76,7 @@ router.post('/session', authenticateToken, async (req, res, next) => {
     res.json({
       success: true,
       sessionId,
-      checkoutUrl: 'https://cbcmpgs.gateway.mastercard.com/static/checkout/checkout.min.js',
-      mpgsSessionId: sessionResult.sessionId,
-      callbackUrl: sessionResult.callbackUrl,
-      paymentId: payment.paymentId
+      checkoutScriptUrl: 'https://cbcmpgs.gateway.mastercard.com/checkout/version/100/checkout.js'
     });
   } catch (error) {
     next(error);
@@ -88,71 +86,50 @@ router.post('/session', authenticateToken, async (req, res, next) => {
 // MPGS Payment Completion Handler - GET (Main flow for redirect callbacks)
 router.get('/complete', async (req, res, next) => {
   try {
-    const { orderId, status = 'completed' } = req.query;
+    const { resultIndicator } = req.query;
     
-    console.log('GET /complete called with:', { orderId, status, query: req.query });
+    console.log('GET /complete called with resultIndicator:', resultIndicator);
     
-    if (!orderId) {
-      console.log('Missing orderId in callback');
-      return res.redirect('http://localhost:3000/dashboard?error=missing_order_id');
+    if (!resultIndicator) {
+      console.log('Missing resultIndicator');
+      return res.redirect('http://localhost:3000/dashboard?error=missing_result_indicator');
     }
 
-    // Find the most recent pending payment by orderId (which is our paymentId in MPGS)
+    // Get the most recent pending payment for this session
+    const session = await sessionService.getActiveSession(req);
+    if (!session) {
+      console.log('No active session found');
+      return res.redirect('http://localhost:3000/dashboard?error=no_session');
+    }
+
     const Payment = require('../models/payment');
     const pendingPayment = await Payment.findOne({
-      paymentId: orderId,
+      userId: session.userId,
       status: 'pending'
     }).sort({ createdAt: -1 });
 
     if (!pendingPayment) {
-      console.log('No pending payment found for orderId:', orderId);
+      console.log('No pending payment found for user:', session.userId);
       return res.redirect('http://localhost:3000/dashboard?error=no_pending_payment');
     }
 
     console.log('Found pending payment:', pendingPayment.paymentId);
 
-    // Handle different callback statuses
-    if (status === 'timeout') {
-      pendingPayment.status = 'failed';
-      pendingPayment.metadata = {
-        ...pendingPayment.metadata,
-        failureReason: 'Payment timeout',
-        failedAt: new Date()
-      };
-      await pendingPayment.save();
-      console.log('Payment marked as timed out');
-      return res.redirect('http://localhost:3000/dashboard?payment=timeout');
-    }
-
-    // For successful or unknown status, verify with MPGS using hosted checkout completion
-    const mpgsSessionId = pendingPayment.metadata?.mpgsSessionId;
+    // Verify payment status with MPGS
+    const paymentData = await mpgsService.verifyPayment(pendingPayment.paymentId);
     
-    if (!mpgsSessionId) {
-      console.log('No MPGS session ID found for payment:', pendingPayment.paymentId);
-      return res.redirect('http://localhost:3000/dashboard?error=no_session_id');
-    }
+    console.log('MPGS verification result:', paymentData);
 
-    // Use the new hosted checkout completion method
-    const paymentResult = await mpgsService.handleHostedCheckoutCompletion(
-      mpgsSessionId, 
-      pendingPayment.paymentId, 
-      req.query.resultIndicator
-    );
-    
-    console.log('MPGS hosted checkout completion result:', paymentResult);
-
-    if (paymentResult.success && paymentResult.verified) {
-      // Payment successful
+    if (paymentData && paymentData.result === 'SUCCESS') {
+      // Update payment status
       pendingPayment.status = 'completed';
       pendingPayment.metadata = {
         ...pendingPayment.metadata,
-        mpgsResult: paymentResult,
-        completedAt: new Date(),
-        transactionId: paymentResult.transactionId,
-        acquirerCode: paymentResult.acquirerCode
+        mpgsVerification: paymentData,
+        completedAt: new Date()
       };
       await pendingPayment.save();
-      console.log('Payment updated to completed with transaction:', paymentResult.transactionId);
+      console.log('Payment updated to completed');
 
       // Update order status if there's an associated order
       if (pendingPayment.orderId) {
@@ -173,16 +150,15 @@ router.get('/complete', async (req, res, next) => {
       console.log('Redirecting to dashboard with success');
       return res.redirect('http://localhost:3000/dashboard?payment=success');
     } else {
-      // Payment failed or verification failed
+      // Payment failed
       pendingPayment.status = 'failed';
       pendingPayment.metadata = {
         ...pendingPayment.metadata,
-        mpgsResult: paymentResult,
-        failedAt: new Date(),
-        failureReason: paymentResult.errorMessage || 'Payment verification failed'
+        mpgsVerification: paymentData,
+        failedAt: new Date()
       };
       await pendingPayment.save();
-      console.log('Payment marked as failed:', paymentResult.errorMessage || 'Verification failed');
+      console.log('Payment marked as failed');
 
       return res.redirect('http://localhost:3000/dashboard?payment=failed');
     }
@@ -264,9 +240,9 @@ router.post('/create', authenticateToken, validatePaymentRequest, async (req, re
     const { orderId, amount, paymentMethod } = req.body;
     const { uin } = req.user;
 
-    const result = await paymentService.processPayment({
+    const result = await paymentService.createPayment({
       orderId,
-      uin: uin,
+      userId: uin,
       amount,
       paymentMethod
     });

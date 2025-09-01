@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authService, UserProfile } from '../../services/api';
 import MenuDisplay from './MenuDisplay';
 import OrdersDisplay from './OrdersDisplay';
@@ -14,10 +14,15 @@ import AIFoodSuggestionsWidget from './AIFoodSuggestionsWidget';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+  } | null>(null);
 
   const getTimeOfDay = () => {
     const hour = new Date().getHours();
@@ -59,6 +64,47 @@ const Dashboard: React.FC = () => {
 
     initDashboard();
   }, [navigate]);
+
+  // Handle navigation state messages (e.g., from payment success)
+  useEffect(() => {
+    if (location.state?.message) {
+      setNotification({
+        message: location.state.message,
+        type: location.state.type || 'info'
+      });
+      
+      // Clear the navigation state to prevent showing message on refresh
+      window.history.replaceState({}, document.title);
+      
+      // Auto-hide notification after 5 seconds
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+    }
+
+    // Also handle URL parameters for direct redirects (e.g., from MPGS)
+    const urlParams = new URLSearchParams(location.search);
+    const paymentSuccess = urlParams.get('paymentSuccess');
+    const orderId = urlParams.get('orderId');
+    const amount = urlParams.get('amount');
+    
+    if (paymentSuccess === 'true' && orderId) {
+      const amountText = amount ? ` for LKR ${parseFloat(amount).toFixed(2)}` : '';
+      setNotification({
+        message: `🎉 Payment successful${amountText}! Order ${orderId} has been confirmed and is being prepared.`,
+        type: 'success'
+      });
+      
+      // Clean up URL parameters
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      
+      // Auto-hide notification after 7 seconds (longer for payment success)
+      setTimeout(() => {
+        setNotification(null);
+      }, 7000);
+    }
+  }, [location.state, location.search]);
 
   const handleLogout = async () => {
     try {
@@ -103,6 +149,22 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Notification Component */}
+      {notification && (
+        <div className={`notification notification-${notification.type}`}>
+          <div className="notification-content">
+            <span className="notification-message">{notification.message}</span>
+            <button 
+              className="notification-close" 
+              onClick={() => setNotification(null)}
+              aria-label="Close notification"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="dashboard-main">
         <div className="container">

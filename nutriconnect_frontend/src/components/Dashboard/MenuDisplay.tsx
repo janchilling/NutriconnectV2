@@ -11,6 +11,7 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [cart, setCart] = useState<{ [key: string]: number }>({});
   const [ordering, setOrdering] = useState(false);
+  const [paymentOption, setPaymentOption] = useState<'now' | 'later' | null>(null);
 
   useEffect(() => {
     loadTodaysMenu();
@@ -71,7 +72,7 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onClose }) => {
     return null;
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (paymentType: 'now' | 'later') => {
     if (Object.keys(cart).length === 0) return;
 
     try {
@@ -86,13 +87,20 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onClose }) => {
         items,
         deliveryDate: new Date().toISOString().split('T')[0],
         mealType: 'lunch',
-        specialInstructions: ''
+        specialInstructions: `Payment: ${paymentType === 'now' ? 'Pay Now' : 'Pay Later'}`
       };
 
       const response = await orderService.createOrder(orderData);
       if (response.success) {
-        alert('Order placed successfully!');
+        if (paymentType === 'now') {
+          // Redirect to payment or handle payment flow
+          alert(`Order placed successfully! Proceeding to payment for Rs. ${getCartTotal().toFixed(2)}`);
+          // Here you would typically redirect to payment service or open payment modal
+        } else {
+          alert('Order placed successfully! Payment will be processed later.');
+        }
         setCart({});
+        setPaymentOption(null);
         onClose();
       } else {
         alert('Failed to place order: ' + response.message);
@@ -195,29 +203,139 @@ const MenuDisplay: React.FC<MenuDisplayProps> = ({ onClose }) => {
         </div>
 
         {Object.keys(cart).length > 0 && (
-          <div className="cart-summary">
-            <div className="cart-items">
-              <h4>Order Summary</h4>
+          <div className="cart-summary" style={{
+            position: 'sticky',
+            bottom: 0,
+            background: 'white',
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            padding: '16px',
+            margin: '16px 0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            maxHeight: '300px',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div className="cart-items" style={{
+              maxHeight: '150px',
+              overflowY: 'auto',
+              marginBottom: '12px',
+              flexGrow: 1
+            }}>
+              <h4 style={{ margin: '0 0 12px 0', color: '#333' }}>Order Summary</h4>
               {Object.entries(cart).map(([itemId, quantity]) => {
                 const item = findItemById(itemId);
                 return item ? (
-                  <div key={itemId} className="cart-item">
-                    <span>{item.name} × {quantity}</span>
-                    <span>Rs. {(item.price * quantity).toFixed(2)}</span>
+                  <div key={itemId} className="cart-item" style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px 0',
+                    borderBottom: '1px solid #f0f0f0'
+                  }}>
+                    <span style={{ fontSize: '14px', color: '#555' }}>{item.name} × {quantity}</span>
+                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>Rs. {(item.price * quantity).toFixed(2)}</span>
                   </div>
                 ) : null;
               })}
             </div>
-            <div className="cart-total">
-              <strong>Total: Rs. {getCartTotal().toFixed(2)}</strong>
+            <div className="cart-total" style={{
+              padding: '12px 0',
+              borderTop: '2px solid #A0C878',
+              marginBottom: '12px'
+            }}>
+              <strong style={{ fontSize: '16px', color: '#333' }}>Total: Rs. {getCartTotal().toFixed(2)}</strong>
             </div>
-            <button 
-              onClick={handlePlaceOrder}
-              className="btn btn-primary btn-block"
-              disabled={ordering}
-            >
-              {ordering ? 'Placing Order...' : 'Place Order'}
-            </button>
+            
+            {!paymentOption ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <h5 style={{ margin: '0 0 8px 0', color: '#333', fontSize: '14px' }}>Choose Payment Option:</h5>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={() => setPaymentOption('now')}
+                    className="btn btn-primary"
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      backgroundColor: '#A0C878',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    💳 Pay Now
+                  </button>
+                  <button 
+                    onClick={() => setPaymentOption('later')}
+                    className="btn btn-secondary"
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ⏰ Pay Later
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ 
+                  padding: '8px 12px', 
+                  backgroundColor: '#f8f9fa', 
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  color: '#333'
+                }}>
+                  Selected: {paymentOption === 'now' ? '💳 Pay Now' : '⏰ Pay Later'}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={() => handlePlaceOrder(paymentOption)}
+                    className="btn btn-primary"
+                    disabled={ordering}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      backgroundColor: ordering ? '#ccc' : '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: ordering ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {ordering ? 'Placing Order...' : 'Confirm Order'}
+                  </button>
+                  <button 
+                    onClick={() => setPaymentOption(null)}
+                    className="btn btn-secondary"
+                    disabled={ordering}
+                    style={{
+                      padding: '12px 16px',
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: ordering ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Back
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

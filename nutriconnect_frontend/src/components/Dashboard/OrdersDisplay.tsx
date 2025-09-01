@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Order, orderService } from '../../services/api';
+import Payment from '../Payment/Payment';
 
 interface OrdersDisplayProps {
   onClose: () => void;
@@ -10,6 +11,7 @@ const OrdersDisplay: React.FC<OrdersDisplayProps> = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'delivered' | 'cancelled'>('all');
+  const [showPayment, setShowPayment] = useState<Order | null>(null);
 
   useEffect(() => {
     loadOrders();
@@ -50,6 +52,28 @@ const OrdersDisplay: React.FC<OrdersDisplayProps> = ({ onClose }) => {
     }
   };
 
+  const handlePayOrder = async (order: Order) => {
+    setShowPayment(order);
+  };
+
+  const handlePaymentSuccess = (paymentId: string, transactionId: string) => {
+    console.log('✅ Payment successful:', { paymentId, transactionId });
+    alert(`Payment successful! Transaction ID: ${transactionId}`);
+    setShowPayment(null);
+    loadOrders(); // Reload orders to get updated payment status
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error('❌ Payment error:', error);
+    alert(`Payment failed: ${error}`);
+    setShowPayment(null);
+  };
+
+  const handlePaymentCancel = () => {
+    console.log('Payment cancelled by user');
+    setShowPayment(null);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return '#f39c12';
@@ -74,6 +98,19 @@ const OrdersDisplay: React.FC<OrdersDisplayProps> = ({ onClose }) => {
 
   const canCancelOrder = (order: Order) => {
     return ['pending', 'confirmed'].includes(order.status);
+  };
+
+  const canPayOrder = (order: Order) => {
+    return order.paymentStatus === 'pending' && order.status !== 'cancelled';
+  };
+
+  const getPaymentStatusColor = (paymentStatus: string) => {
+    switch (paymentStatus) {
+      case 'pending': return '#f39c12';
+      case 'paid': return '#27ae60';
+      case 'failed': return '#e74c3c';
+      default: return '#95a5a6';
+    }
   };
 
   if (loading) {
@@ -197,15 +234,49 @@ const OrdersDisplay: React.FC<OrdersDisplayProps> = ({ onClose }) => {
                       <strong>Total: Rs. {order.totalAmount.toFixed(2)}</strong>
                     </div>
                     <div className="order-actions">
+                      {canPayOrder(order) && (
+                        <button 
+                          onClick={() => handlePayOrder(order)}
+                          className="btn btn-primary btn-sm"
+                          style={{
+                            backgroundColor: '#28a745',
+                            color: 'white',
+                            border: 'none',
+                            padding: '8px 16px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            marginRight: '8px'
+                          }}
+                        >
+                          <span style={{ marginRight: '4px' }}>💳</span>
+                          Pay Now
+                        </button>
+                      )}
                       {canCancelOrder(order) && (
                         <button 
                           onClick={() => handleCancelOrder(order.orderId)}
                           className="btn btn-outline btn-sm"
+                          style={{
+                            marginRight: '8px'
+                          }}
                         >
                           Cancel Order
                         </button>
                       )}
-                      <span className={`payment-status ${order.paymentStatus}`}>
+                      <span 
+                        className={`payment-status ${order.paymentStatus}`}
+                        style={{
+                          backgroundColor: getPaymentStatusColor(order.paymentStatus),
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          textTransform: 'uppercase'
+                        }}
+                      >
                         Payment: {order.paymentStatus}
                       </span>
                     </div>
@@ -216,6 +287,40 @@ const OrdersDisplay: React.FC<OrdersDisplayProps> = ({ onClose }) => {
           )}
         </div>
       </div>
+      
+      {/* Payment Modal */}
+      {showPayment && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          zIndex: 9999,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '0',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <Payment
+              orderId={showPayment.orderId}
+              amount={showPayment.totalAmount}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+              onPaymentCancel={handlePaymentCancel}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1870,3 +1870,119 @@
     padding: 0.5rem;
   }
 }
+
+/* Notification Styles */
+.notification {
+  position: fixed;
+  top: 80px; /* Below the header */
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 500px;
+  width: 90%;
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideInDown 0.3s ease-out;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notification-message {
+  flex: 1;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.notification-close:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Notification Types */
+.notification-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border: 1px solid #b8dabd;
+  color: #155724;
+}
+
+.notification-success .notification-close {
+  color: #155724;
+}
+
+.notification-success .notification-close:hover {
+  background-color: rgba(21, 87, 36, 0.1);
+}
+
+.notification-error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.notification-error .notification-close {
+  color: #721c24;
+}
+
+.notification-error .notification-close:hover {
+  background-color: rgba(114, 28, 36, 0.1);
+}
+
+.notification-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  border: 1px solid #b6d4db;
+  color: #0c5460;
+}
+
+.notification-info .notification-close {
+  color: #0c5460;
+}
+
+.notification-info .notification-close:hover {
+  background-color: rgba(12, 84, 96, 0.1);
+}
+
+/* Notification Animation */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Auto-hide animation */
+.notification {
+  animation: slideInDown 0.3s ease-out, fadeOut 0.3s ease-in 4.7s forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+}
