@@ -61,10 +61,10 @@ const updateOrderStatus = async (orderId, status, paymentDetails = {}) => {
       data: response.data
     };
   } catch (error) {
-    console.error(`❌ Failed to update order ${orderId} status:`, error.message);
+    console.error(`❌ Failed to update order ${orderId} status:`, error.response?.data || error.message);
     return {
       success: false,
-      error: error.message
+      error: error.response?.data || error.message
     };
   }
 };

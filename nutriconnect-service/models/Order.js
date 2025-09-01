@@ -29,6 +29,10 @@ const OrderSchema = new mongoose.Schema({
     default: 'pending' 
   },
   paymentMethod: { type: String, enum: ['subsidy', 'wallet', 'card', 'cash'] },
+  paymentId: { type: String }, // Payment service payment ID
+  transactionId: { type: String }, // Payment gateway transaction ID
+  paymentAmount: { type: Number }, // Amount paid
+  paymentCurrency: { type: String, default: 'LKR' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

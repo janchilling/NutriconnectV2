@@ -404,6 +404,7 @@ router.patch('/:orderId/status', async (req, res) => {
     }
 
     console.log(`📦 Updating order ${orderId} status to: ${status}`);
+    console.log(`💳 Payment details:`, paymentDetails);
 
     const order = await Order.findOne({ orderId });
     if (!order) {
@@ -423,9 +424,10 @@ router.patch('/:orderId/status', async (req, res) => {
       if (paymentDetails.transactionId) order.transactionId = paymentDetails.transactionId;
       if (paymentDetails.amount) order.paymentAmount = paymentDetails.amount;
       if (paymentDetails.currency) order.paymentCurrency = paymentDetails.currency;
+      if (paymentDetails.paymentMethod) order.paymentMethod = paymentDetails.paymentMethod;
       
       // Update payment status based on order status
-      if (status === 'paid' || status === 'confirmed') {
+      if (status === 'confirmed' || status === 'preparing' || status === 'ready' || status === 'delivered') {
         order.paymentStatus = 'paid';
       } else if (status === 'cancelled') {
         order.paymentStatus = 'failed';

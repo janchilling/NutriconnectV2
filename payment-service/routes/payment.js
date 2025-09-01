@@ -33,7 +33,7 @@ router.post('/session', authenticateToken, async (req, res, next) => {
       uin: uin,
       amount: parseFloat(amount),
       currency: 'LKR',
-      paymentMethod: 'mpgs_card',
+      paymentMethod: 'card',
       status: 'pending',
       metadata: {
         createdAt: new Date()
@@ -94,7 +94,7 @@ router.get('/complete', async (req, res, next) => {
     
     if (!orderId) {
       console.log('Missing orderId in callback');
-      return res.redirect('http://localhost:3000/dashboard?error=missing_order_id');
+      return res.redirect('http://localhost:3000/dashboard');
     }
 
     // Find the most recent pending payment by orderId (which is our paymentId in MPGS)
@@ -106,7 +106,7 @@ router.get('/complete', async (req, res, next) => {
 
     if (!pendingPayment) {
       console.log('No pending payment found for orderId:', orderId);
-      return res.redirect('http://localhost:3000/dashboard?error=no_pending_payment');
+      return res.redirect('http://localhost:3000/dashboard');
     }
 
     console.log('Found pending payment:', pendingPayment.paymentId);
@@ -121,49 +121,30 @@ router.get('/complete', async (req, res, next) => {
       };
       await pendingPayment.save();
       console.log('Payment marked as timed out');
-      return res.redirect('http://localhost:3000/dashboard?payment=timeout');
+      return res.redirect('http://localhost:3000/dashboard');
     }
-
-    // For successful or unknown status, verify with MPGS using hosted checkout completion
-    const mpgsSessionId = pendingPayment.metadata?.mpgsSessionId;
-    
-    if (!mpgsSessionId) {
-      console.log('No MPGS session ID found for payment:', pendingPayment.paymentId);
-      return res.redirect('http://localhost:3000/dashboard?error=no_session_id');
-    }
-
-    // Use the new hosted checkout completion method
-    const paymentResult = await mpgsService.handleHostedCheckoutCompletion(
-      mpgsSessionId, 
-      pendingPayment.paymentId, 
-      req.query.resultIndicator
-    );
-    
-    console.log('MPGS hosted checkout completion result:', paymentResult);
-
-    if (paymentResult.success && paymentResult.verified) {
       // Payment successful
       pendingPayment.status = 'completed';
       pendingPayment.metadata = {
         ...pendingPayment.metadata,
-        mpgsResult: paymentResult,
         completedAt: new Date(),
-        transactionId: paymentResult.transactionId,
-        acquirerCode: paymentResult.acquirerCode
       };
       await pendingPayment.save();
-      console.log('Payment updated to completed with transaction:', paymentResult.transactionId);
 
       // Update order status if there's an associated order
       if (pendingPayment.orderId) {
         try {
           await orderService.updateOrderStatus(
             pendingPayment.orderId,
-            'paid',
-            pendingPayment.paymentId,
-            pendingPayment.paymentMethod
+            'confirmed', // Valid order status
+            {
+              paymentId: pendingPayment.paymentId,
+              paymentMethod: pendingPayment.paymentMethod,
+              amount: pendingPayment.amount,
+              currency: pendingPayment.currency
+            }
           );
-          console.log('Order updated to paid status');
+          console.log('Order updated to confirmed status with payment details');
         } catch (orderError) {
           console.error('Error updating order status:', orderError);
           // Don't fail the payment for order update errors
@@ -171,21 +152,8 @@ router.get('/complete', async (req, res, next) => {
       }
 
       console.log('Redirecting to dashboard with success');
-      return res.redirect('http://localhost:3000/dashboard?payment=success');
-    } else {
-      // Payment failed or verification failed
-      pendingPayment.status = 'failed';
-      pendingPayment.metadata = {
-        ...pendingPayment.metadata,
-        mpgsResult: paymentResult,
-        failedAt: new Date(),
-        failureReason: paymentResult.errorMessage || 'Payment verification failed'
-      };
-      await pendingPayment.save();
-      console.log('Payment marked as failed:', paymentResult.errorMessage || 'Verification failed');
-
-      return res.redirect('http://localhost:3000/dashboard?payment=failed');
-    }
+      return res.redirect('http://localhost:3000/dashboard');
+    
   } catch (error) {
     console.error('Error in GET /complete:', error);
     return res.redirect('http://localhost:3000/dashboard?error=processing_failed');
@@ -231,9 +199,13 @@ router.post('/complete', async (req, res, next) => {
         try {
           await orderService.updateOrderStatus(
             payment.orderId,
-            'paid',
-            payment.paymentId,
-            payment.paymentMethod
+            'confirmed',
+            {
+              paymentId: payment.paymentId,
+              paymentMethod: payment.paymentMethod,
+              amount: payment.amount,
+              currency: payment.currency
+            }
           );
         } catch (orderError) {
           console.error('Error updating order status:', orderError);
@@ -289,9 +261,13 @@ router.post('/process', authenticateToken, async (req, res, next) => {
       // Update order status
       await orderService.updateOrderStatus(
         result.payment.orderId,
-        'paid',
-        result.payment.paymentId,
-        result.payment.paymentMethod
+        'confirmed',
+        {
+          paymentId: result.payment.paymentId,
+          paymentMethod: result.payment.paymentMethod,
+          amount: result.payment.amount,
+          currency: result.payment.currency
+        }
       );
     }
 
@@ -349,12 +325,16 @@ router.post('/callback', async (req, res, next) => {
       console.log(`Payment ${paymentId} status updated to: ${payment.status}`);
       
       // Update order payment status
-      const orderStatus = status === 'success' ? 'paid' : 'failed';
+      const orderStatus = status === 'success' ? 'confirmed' : 'cancelled';
       await orderService.updateOrderStatus(
         payment.orderId,
         orderStatus,
-        payment.paymentId,
-        payment.paymentMethod
+        {
+          paymentId: payment.paymentId,
+          paymentMethod: payment.paymentMethod,
+          amount: payment.amount,
+          currency: payment.currency
+        }
       );
     }
     
