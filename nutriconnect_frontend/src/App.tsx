@@ -55,10 +55,9 @@ const App: React.FC = () => {
           <Route 
             path="/dashboard" 
             element={
-              <PublicRoute>
+              <ProtectedRoute>
                 <Dashboard />
-              </PublicRoute>
-                
+              </ProtectedRoute>
             } 
           />
           

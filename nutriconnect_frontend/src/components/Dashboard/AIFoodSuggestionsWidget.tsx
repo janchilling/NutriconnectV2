@@ -11,12 +11,20 @@ interface FoodSuggestion {
 
 interface SuggestionsResponse {
   success: boolean;
-  suggestions: FoodSuggestion[];
+  individualSuggestions: FoodSuggestion[];
+  comboSuggestions: any[];
   context: {
     timeOfDay: string;
     remainingCalories: number;
     remainingProtein: number;
+    totalCaloriesConsumed: number;
+    totalProteinConsumed: number;
+    budgetEfficiency: {
+      avgCostPerCalorie: string;
+      avgCostPerProtein: string;
+    };
   };
+  dataSource: string;
 }
 
 const AIFoodSuggestionsWidget: React.FC = () => {
@@ -33,7 +41,9 @@ const AIFoodSuggestionsWidget: React.FC = () => {
       const response = await nutriconnectApi.get<SuggestionsResponse>('/api/ai/food-suggestions');
       
       if (response.data.success) {
-        setSuggestions(response.data.suggestions);
+        // Handle the new API response structure with safety checks
+        const allSuggestions = response.data.individualSuggestions || [];
+        setSuggestions(Array.isArray(allSuggestions) ? allSuggestions : []);
         setContext(response.data.context);
       } else {
         setError('Failed to load AI suggestions');
@@ -121,7 +131,7 @@ const AIFoodSuggestionsWidget: React.FC = () => {
       )}
 
       <div className="widget-content">
-        {suggestions.length === 0 ? (
+        {!suggestions || suggestions.length === 0 ? (
           <p className="no-suggestions">No suggestions available right now.</p>
         ) : (
           <div className="suggestions-list">
